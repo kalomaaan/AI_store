@@ -1,0 +1,5 @@
+{
+  "env": {
+    "CAVEMAN_DEFAULT_MODE": "ultra"
+  }
+}
