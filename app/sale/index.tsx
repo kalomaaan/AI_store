@@ -14,8 +14,8 @@ import { Field } from '@/components/Field';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { useCart } from '@/stores/cart';
-import { listProducts } from '@/db/repo/products';
-import type { Product } from '@/db/schema';
+import { Image } from 'expo-image';
+import { listProducts, type ProductWithPhoto } from '@/db/repo/products';
 import { colors, font, radius, spacing } from '@/theme/colors';
 import { money } from '@/lib/format';
 
@@ -30,8 +30,8 @@ export default function NewSale() {
   const clear = useCart((s) => s.clear);
 
   const [search, setSearch] = useState('');
-  const [results, setResults] = useState<Product[]>([]);
-  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [results, setResults] = useState<ProductWithPhoto[]>([]);
+  const [favorites, setFavorites] = useState<ProductWithPhoto[]>([]);
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
@@ -53,7 +53,7 @@ export default function NewSale() {
     setResults((await listProducts({ search: q })).slice(0, 8));
   };
 
-  const addProduct = (p: Product) => {
+  const addProduct = (p: ProductWithPhoto) => {
     add({
       productId: p.id,
       name: p.name,
@@ -90,13 +90,21 @@ export default function NewSale() {
           style={{ flex: 1 }}
         />
         <Button label="📷" onPress={() => router.push('/scanner?mode=sale')} />
+        <Button label="🖼️" variant="secondary" onPress={() => router.push('/visual-pick')} />
       </View>
 
       {results.length > 0 && (
         <Card style={styles.results}>
           {results.map((p) => (
             <Pressable key={p.id} onPress={() => addProduct(p)} style={styles.resultRow}>
-              <Text style={styles.resName}>{p.name}</Text>
+              {p.thumbUri ? (
+                <Image source={{ uri: p.thumbUri }} style={styles.resThumb} contentFit="cover" />
+              ) : (
+                <View style={[styles.resThumb, styles.resThumbPlaceholder]}>
+                  <Text style={{ fontSize: 18, opacity: 0.6 }}>📦</Text>
+                </View>
+              )}
+              <Text style={styles.resName} numberOfLines={1}>{p.name}</Text>
               <Text style={styles.resPrice}>{money(p.price)}</Text>
             </Pressable>
           ))}
@@ -126,6 +134,9 @@ export default function NewSale() {
           <View style={styles.favGrid}>
             {favorites.slice(0, 8).map((p) => (
               <Pressable key={p.id} onPress={() => addProduct(p)} style={styles.favTile}>
+                {p.thumbUri ? (
+                  <Image source={{ uri: p.thumbUri }} style={styles.favPhoto} contentFit="cover" />
+                ) : null}
                 <Text style={styles.favName} numberOfLines={2}>
                   {p.name}
                 </Text>
@@ -221,15 +232,24 @@ const styles = StyleSheet.create({
   results: { padding: 0, marginBottom: spacing.md, overflow: 'hidden' },
   resultRow: {
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: spacing.md,
   },
-  resName: { color: colors.text, fontSize: font.md, fontWeight: '600' },
+  resThumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: colors.surfaceAlt },
+  resThumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  resName: { flex: 1, color: colors.text, fontSize: font.md, fontWeight: '600' },
   resPrice: { color: colors.primary, fontSize: font.md, fontWeight: '700' },
+  favPhoto: {
+    width: '100%',
+    height: 60,
+    borderRadius: 8,
+    marginBottom: 4,
+    backgroundColor: colors.surfaceAlt,
+  },
   favWrap: { marginBottom: spacing.md },
   favGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   favTile: {

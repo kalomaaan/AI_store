@@ -32,6 +32,28 @@ export const products = sqliteTable(
   })
 );
 
+export const productPhotos = sqliteTable(
+  'product_photos',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    productId: integer('product_id')
+      .references(() => products.id, { onDelete: 'cascade' })
+      .notNull(),
+    uri: text('uri').notNull(),       // file:// path under documentDirectory
+    thumbUri: text('thumb_uri'),      // optional small version
+    width: integer('width'),
+    height: integer('height'),
+    isPrimary: integer('is_primary', { mode: 'boolean' }).default(false).notNull(),
+    embedding: text('embedding'),     // reserved for Phase B (TFLite vector as JSON string)
+    createdAt: text('created_at')
+      .default(sql`(CURRENT_TIMESTAMP)`)
+      .notNull(),
+  },
+  (t) => ({
+    productIdx: index('product_photos_product_idx').on(t.productId),
+  })
+);
+
 export const stockMovements = sqliteTable('stock_movements', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   productId: integer('product_id')
@@ -185,3 +207,4 @@ export type Customer = typeof customers.$inferSelect;
 export type Merchant = typeof merchants.$inferSelect;
 export type CashMovement = typeof cashMovements.$inferSelect;
 export type CashSession = typeof cashSessions.$inferSelect;
+export type ProductPhoto = typeof productPhotos.$inferSelect;

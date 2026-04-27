@@ -1,21 +1,52 @@
-import { and, desc, eq, like, or } from 'drizzle-orm';
+import { and, desc, eq, like, or, sql } from 'drizzle-orm';
 import { db, schema } from '../index';
 import type { NewProduct, Product } from '../schema';
 
-const { products, stockMovements } = schema;
+const { products, stockMovements, productPhotos } = schema;
 
-export async function listProducts(opts?: { search?: string; favoritesOnly?: boolean }) {
+export type ProductWithPhoto = Product & { thumbUri: string | null };
+
+async function attachThumbs(rows: Product[]): Promise<ProductWithPhoto[]> {
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const photos = await db
+    .select({
+      productId: productPhotos.productId,
+      uri: productPhotos.uri,
+      thumbUri: productPhotos.thumbUri,
+      isPrimary: productPhotos.isPrimary,
+      id: productPhotos.id,
+    })
+    .from(productPhotos)
+    .where(sql`${productPhotos.productId} IN (${sql.join(ids.map((i) => sql`${i}`), sql`, `)})`);
+  // Pick primary, else lowest-id photo per product
+  const byProduct = new Map<number, { thumbUri: string | null; isPrimary: boolean; id: number }>();
+  for (const p of photos) {
+    const cur = byProduct.get(p.productId);
+    const candidate = { thumbUri: p.thumbUri ?? p.uri, isPrimary: p.isPrimary, id: p.id };
+    if (!cur || (p.isPrimary && !cur.isPrimary) || (cur.isPrimary === p.isPrimary && p.id < cur.id)) {
+      byProduct.set(p.productId, candidate);
+    }
+  }
+  return rows.map((r) => ({ ...r, thumbUri: byProduct.get(r.id)?.thumbUri ?? null }));
+}
+
+export async function listProducts(opts?: {
+  search?: string;
+  favoritesOnly?: boolean;
+}): Promise<ProductWithPhoto[]> {
   const where = [eq(products.archived, false)];
   if (opts?.favoritesOnly) where.push(eq(products.favorite, true));
   if (opts?.search) {
     const q = `%${opts.search}%`;
     where.push(or(like(products.name, q), like(products.barcode, q), like(products.sku, q))!);
   }
-  return db
+  const rows = await db
     .select()
     .from(products)
     .where(and(...where))
     .orderBy(desc(products.favorite), products.name);
+  return attachThumbs(rows);
 }
 
 export async function getById(id: number): Promise<Product | undefined> {

@@ -1,18 +1,18 @@
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Field } from '@/components/Field';
 import { Button } from '@/components/Button';
-import { listProducts } from '@/db/repo/products';
-import type { Product } from '@/db/schema';
+import { listProducts, type ProductWithPhoto } from '@/db/repo/products';
 import { colors, font, radius, spacing } from '@/theme/colors';
 import { money } from '@/lib/format';
 
 export default function InventoryList() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [items, setItems] = useState<Product[]>([]);
+  const [items, setItems] = useState<ProductWithPhoto[]>([]);
 
   const reload = useCallback(async () => {
     setItems(await listProducts({ search: search || undefined }));
@@ -60,10 +60,17 @@ export default function InventoryList() {
   );
 }
 
-function Row({ item, onPress }: { item: Product; onPress: () => void }) {
+function Row({ item, onPress }: { item: ProductWithPhoto; onPress: () => void }) {
   const low = item.stock <= item.lowStock;
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.row, pressed && { opacity: 0.85 }]}>
+      {item.thumbUri ? (
+        <Image source={{ uri: item.thumbUri }} style={styles.thumb} contentFit="cover" />
+      ) : (
+        <View style={[styles.thumb, styles.thumbPlaceholder]}>
+          <Text style={styles.thumbPlaceholderIcon}>📦</Text>
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text style={styles.name}>{item.name}</Text>
         <Text style={styles.meta}>
@@ -86,11 +93,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    padding: spacing.md,
+    padding: spacing.sm,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
+    gap: spacing.md,
   },
+  thumb: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceAlt,
+  },
+  thumbPlaceholder: { alignItems: 'center', justifyContent: 'center' },
+  thumbPlaceholderIcon: { fontSize: 28, opacity: 0.5 },
   name: { color: colors.text, fontSize: font.lg, fontWeight: '700' },
   meta: { color: colors.textDim, fontSize: font.sm, marginTop: 2 },
   stockBox: { alignItems: 'flex-end', minWidth: 60 },

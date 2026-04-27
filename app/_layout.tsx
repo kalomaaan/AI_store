@@ -51,6 +51,7 @@ export default function RootLayout() {
           <Stack.Screen name="cash/close" options={{ title: 'End of Day', presentation: 'modal' }} />
           <Stack.Screen name="reports/today" options={{ title: 'Today' }} />
           <Stack.Screen name="update" options={{ title: 'App Update' }} />
+          <Stack.Screen name="visual-pick" options={{ title: 'Pick by photo', presentation: 'modal' }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -7,7 +7,7 @@
       "typedRoutes": false
     },
     "scheme": "aistore",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -42,6 +42,13 @@
         "expo-camera",
         {
           "cameraPermission": "AI Store needs camera access to scan barcodes and read product labels."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "AI Store needs photo access to attach product photos.",
+          "cameraPermission": "AI Store needs camera access to take product photos."
         }
       ]
     ]

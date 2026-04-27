@@ -1,6 +1,6 @@
 import type * as SQLite from 'expo-sqlite';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 const STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS products (
@@ -22,6 +22,19 @@ const STATEMENTS = [
   );`,
   `CREATE INDEX IF NOT EXISTS products_barcode_idx ON products(barcode);`,
   `CREATE INDEX IF NOT EXISTS products_name_idx ON products(name);`,
+
+  `CREATE TABLE IF NOT EXISTS product_photos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    uri TEXT NOT NULL,
+    thumb_uri TEXT,
+    width INTEGER,
+    height INTEGER,
+    is_primary INTEGER NOT NULL DEFAULT 0,
+    embedding TEXT,
+    created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+  );`,
+  `CREATE INDEX IF NOT EXISTS product_photos_product_idx ON product_photos(product_id);`,
 
   `CREATE TABLE IF NOT EXISTS stock_movements (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

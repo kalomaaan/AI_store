@@ -95,7 +95,7 @@ android {
         def aistoreVersionCodeEnv = System.getenv('AISTORE_VERSION_CODE')
         def aistoreVersionNameEnv = System.getenv('AISTORE_VERSION_NAME')
         versionCode aistoreVersionCodeEnv?.isInteger() ? aistoreVersionCodeEnv.toInteger() : 1
-        versionName aistoreVersionNameEnv ?: '0.1.0'
+        versionName aistoreVersionNameEnv ?: '0.2.0'
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }

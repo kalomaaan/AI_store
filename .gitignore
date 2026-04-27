@@ -38,6 +38,7 @@ yarn-error.*
 
 # Claude Code workspace settings
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # generated native folders
 /ios

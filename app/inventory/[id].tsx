@@ -1,31 +1,76 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Field } from '@/components/Field';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { adjustStock, getById, toggleFavorite, updateProduct } from '@/db/repo/products';
-import type { Product } from '@/db/schema';
+import { addPhoto, deletePhoto, listPhotos, setPrimary } from '@/db/repo/photos';
+import { deletePhotoFiles, pickFromLibrary, takePhoto } from '@/lib/photos';
+import type { Product, ProductPhoto } from '@/db/schema';
 import { fromCents, money, toCents } from '@/lib/format';
-import { colors, font, spacing } from '@/theme/colors';
+import { colors, font, radius, spacing } from '@/theme/colors';
 
 export default function ProductDetail() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string; action?: string }>();
   const id = parseInt(params.id ?? '', 10);
   const [p, setP] = useState<Product | null>(null);
+  const [photos, setPhotos] = useState<ProductPhoto[]>([]);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Partial<Product>>({});
   const [adjustQty, setAdjustQty] = useState('');
   const [adjustNote, setAdjustNote] = useState('');
+  const [busyPhoto, setBusyPhoto] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
-    const row = await getById(id);
+    const [row, ph] = await Promise.all([getById(id), listPhotos(id)]);
     setP(row ?? null);
     setDraft(row ?? {});
+    setPhotos(ph);
   }, [id]);
+
+  const onTakePhoto = async () => {
+    if (!p) return;
+    setBusyPhoto(true);
+    try {
+      const cap = await takePhoto(p.id);
+      if (cap) await addPhoto({ productId: p.id, ...cap, isPrimary: photos.length === 0 });
+      await load();
+    } finally {
+      setBusyPhoto(false);
+    }
+  };
+
+  const onPickPhoto = async () => {
+    if (!p) return;
+    setBusyPhoto(true);
+    try {
+      const cap = await pickFromLibrary(p.id);
+      if (cap) await addPhoto({ productId: p.id, ...cap, isPrimary: photos.length === 0 });
+      await load();
+    } finally {
+      setBusyPhoto(false);
+    }
+  };
+
+  const onDeletePhoto = async (ph: ProductPhoto) => {
+    Alert.alert('Delete photo?', 'This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deletePhoto(ph.id);
+          await deletePhotoFiles(ph.uri, ph.thumbUri);
+          await load();
+        },
+      },
+    ]);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -87,6 +132,41 @@ export default function ProductDetail() {
             <Kv label="Cost" value={money(p.cost)} />
           </View>
           {p.barcode ? <Text style={styles.muted}>Barcode: {p.barcode}</Text> : null}
+        </Card>
+
+        <Card style={{ marginBottom: spacing.md, gap: spacing.sm }}>
+          <Text style={styles.section}>Photos</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+            {photos.map((ph) => (
+              <View key={ph.id} style={styles.photoBox}>
+                <Pressable onPress={() => setPrimary(ph.id).then(load)} onLongPress={() => onDeletePhoto(ph)}>
+                  <Image
+                    source={{ uri: ph.thumbUri ?? ph.uri }}
+                    style={styles.photo}
+                    contentFit="cover"
+                  />
+                  {ph.isPrimary ? (
+                    <View style={styles.primaryBadge}>
+                      <Text style={styles.primaryBadgeText}>★</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              </View>
+            ))}
+            <Pressable onPress={onTakePhoto} style={[styles.photoBox, styles.addBox]} disabled={busyPhoto}>
+              <Text style={styles.addText}>📷</Text>
+              <Text style={styles.addLabel}>Camera</Text>
+            </Pressable>
+            <Pressable onPress={onPickPhoto} style={[styles.photoBox, styles.addBox]} disabled={busyPhoto}>
+              <Text style={styles.addText}>🖼️</Text>
+              <Text style={styles.addLabel}>Gallery</Text>
+            </Pressable>
+          </ScrollView>
+          <Text style={styles.muted}>
+            {photos.length === 0
+              ? 'No photos yet. Add one — helps you find the item fast.'
+              : 'Tap photo to set primary. Long-press to delete.'}
+          </Text>
         </Card>
 
         <Card style={{ marginBottom: spacing.md, gap: spacing.sm }}>
@@ -201,4 +281,32 @@ const styles = StyleSheet.create({
   muted: { color: colors.textDim, fontSize: font.md },
   section: { color: colors.text, fontSize: font.lg, fontWeight: '700' },
   threeRow: { flexDirection: 'row', gap: spacing.sm },
+  photoBox: {
+    width: 96,
+    height: 96,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  photo: { width: 96, height: 96 },
+  primaryBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: colors.primary,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBadgeText: { color: '#0B0F14', fontWeight: '900' },
+  addBox: { borderStyle: 'dashed' },
+  addText: { fontSize: 28 },
+  addLabel: { color: colors.textDim, fontSize: font.sm, marginTop: 2 },
 });

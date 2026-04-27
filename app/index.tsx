@@ -162,6 +162,13 @@ export default function Home() {
         </View>
         <View style={styles.grid}>
           <Tile
+            title="Pick by Photo"
+            subtitle="No barcode? Tap photo"
+            icon="🖼️"
+            tint={colors.accent}
+            onPress={() => router.push('/visual-pick')}
+          />
+          <Tile
             title={updateAvailable ? `Update v${updateAvailable}` : 'App Update'}
             subtitle={updateAvailable ? 'New version ready' : `v${currentVersion()}`}
             icon="⬇️"
@@ -169,7 +176,6 @@ export default function Home() {
             tint={updateAvailable ? colors.info : colors.border}
             onPress={() => router.push('/update')}
           />
-          <View style={{ flex: 1 }} />
         </View>
       </ScrollView>
     </Screen>
