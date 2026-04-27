@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Field } from '@/components/Field';
@@ -66,6 +66,14 @@ export default function NewProduct() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm, marginBottom: spacing.md }}>
+          <Button
+            label="🧠 Scan label for name"
+            variant="secondary"
+            onPress={() => router.replace('/smart-scan?mode=autofill')}
+            style={{ flex: 1 }}
+          />
+        </View>
         <Field label="Name" value={name} onChangeText={setName} placeholder="e.g. Coke 1.5L" />
         <Field
           label="Barcode"

@@ -90,6 +90,7 @@ export default function NewSale() {
           style={{ flex: 1 }}
         />
         <Button label="📷" onPress={() => router.push('/scanner?mode=sale')} />
+        <Button label="🧠" variant="secondary" onPress={() => router.push('/smart-scan?mode=sale')} />
         <Button label="🖼️" variant="secondary" onPress={() => router.push('/visual-pick')} />
       </View>
 

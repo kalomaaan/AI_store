@@ -1,0 +1,24 @@
+diff --git a/node_modules/@react-native-ml-kit/text-recognition/android/build.gradle b/node_modules/@react-native-ml-kit/text-recognition/android/build.gradle
+index 6a2e36f..f080bc9 100644
+--- a/node_modules/@react-native-ml-kit/text-recognition/android/build.gradle
++++ b/node_modules/@react-native-ml-kit/text-recognition/android/build.gradle
+@@ -30,6 +30,7 @@ buildscript {
+ }
+ 
+ android {
++    namespace 'com.rnmlkit.textrecognition'
+     compileSdkVersion safeExtGet('compileSdkVersion', DEFAULT_COMPILE_SDK_VERSION)
+     buildToolsVersion safeExtGet('buildToolsVersion', DEFAULT_BUILD_TOOLS_VERSION)
+     defaultConfig {
+diff --git a/node_modules/@react-native-ml-kit/text-recognition/android/src/main/AndroidManifest.xml b/node_modules/@react-native-ml-kit/text-recognition/android/src/main/AndroidManifest.xml
+index a088559..35c4548 100644
+--- a/node_modules/@react-native-ml-kit/text-recognition/android/src/main/AndroidManifest.xml
++++ b/node_modules/@react-native-ml-kit/text-recognition/android/src/main/AndroidManifest.xml
+@@ -1,6 +1,5 @@
+ <!-- AndroidManifest.xml -->
+ 
+-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+-          package="com.rnmlkit.textrecognition">
++<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ 
+ </manifest>
